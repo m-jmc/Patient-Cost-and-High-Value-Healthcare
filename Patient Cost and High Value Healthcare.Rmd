@@ -1,21 +1,20 @@
-# DRG Data: https://data.cms.gov/inpatient-provider-lookup/view-data
-# HSP Data: https://data.medicare.gov/Hospital-Compare/Medicare-Hospital-Spending-by-Claim/nrth-mfg3
-# Provider (SER): https://data.medicare.gov/Hospital-Compare/Payment-and-value-of-care-Hospital/c7us-v4mf
-# Zip: https://public.opendatasoft.com/explore/dataset/us-zip-code-latitude-and-longitude/export/
-# DRG to MDC:
+---
+title: "Patient Cost and High Value Healthcare"
+author: "Mike"
+date: "2/11/2020"
+output:
+   html_document:
+   toc: true
+   keep_md: true
 
+---
 
-#########################################
-#                                       #
-# NOTE
-# Before loading data sets, remove all
-# spaces from the header columns of the
-# .csv or you're gonna have a bad time.
-# 
-# Name the data frames as shown 
-# in read.csv command
-#                                       #
-#########################################
+```{r setup, include = FALSE, cache = FALSE}
+knitr::opts_chunk$set(error = TRUE)
+```
+
+```{r, include=FALSE}
+
 
 library(caret)
 library(tidyverse)
@@ -30,20 +29,11 @@ library(ROCR)
 library(gridExtra)
 library(reshape2)
 
-
-# hspdata <- read_csv("Data/Data/Medicare_Hospital_Spending_by_Claim.csv")
-# drgdata <- read_csv("Data/Data/Medicare_Provider_Charge_Inpatient_DRGALL_FY2016 - no space.csv")
-# serdata <- read_csv("Data/Data/Provider Value of Care - Hospital - nospace.csv")
-# zipdata <- read_csv("Data/zipdata.csv")
-# DRGtoMDC <- read_csv("C:/Users/hfmm4140/Downloads/Hackathon/Data/Data/DRGtoMDCfulltable.csv")
-
 hspdata <- read_csv("Medicare Spending by Claim.csv")
 drgdata <- read_csv("Medicare_Provider_Charge_Inpatient_DRGALL_FY2016.csv")
 serdata <- read_csv("Provider Value of Care - Hospital.csv")
 zipdata <- read_csv("Zip.csv")
 DRGtoMDC <- read_csv("DRGtoMDCfulltable.csv")
-
-
 
 #Create column of FH locations in dataset
 drgdata$FH <- (ifelse(drgdata$ProviderId == '520177', "Yes", 
@@ -78,10 +68,29 @@ drgdata$ATPperDischarge <- (drgdata$ATP / drgdata$TotalDischarges)
 drgdata$AMPperDischarge <- (drgdata$AMP / drgdata$TotalDischarges)
 
 
-#Find % of total bill payed by CMS AMP/ACC * 100, rounded two places
+#Find % of total bill paid by CMS AMP/ACC * 100, rounded two places
 
 drgdata$PercentCMSperDischarge <- ((drgdata$AMPperDischarge / drgdata$ACCperDischarge) *100)
 drgdata$PercentCMSperDischarge <- format(round(drgdata$PercentCMSperDischarge, 2), nsmall = 2)
+
+
+```
+
+## Data Wrangling
+
+Once the datasets are loaded, we use the Medicare Provider Charge Inpatient data to calculate the average covered charges, total payments, and Medicare payments. These are also calculated per discharge to find the percent of the total bill paid by CMS.
+
+Datasets can be found below: <br>
+DRG Data: https://data.cms.gov/inpatient-provider-lookup/view-data <br>
+HSP Data: https://data.medicare.gov/Hospital-Compare/Medicare-Hospital-Spending-by-Claim/nrth-mfg3 <br>
+Provider (SER): https://data.medicare.gov/Hospital-Compare/Payment-and-value-of-care-Hospital/c7us-v4mf <br>
+Zip: https://public.opendatasoft.com/explore/dataset/us-zip-code-latitude-and-longitude/export/ <br>
+*Note: The CSV's provided reflect modified headers (spaces removes) not included in the script here.* <br>
+
+In order to coalesce data from across these datasets, the "Payment Measure ID" is assigned an inferred "Major Diagnostic Category" (MDC) allowing the quality outcome score to be mapped to the CMS Inpatient provider data via corresponding MDC and DRG. In the provider payment and value of care hospital dataset, the Medicare "Value of Care Category" is translated into a numerical risk score. This forms the indication of value used throughout the analysis (see script for translation details). 
+
+
+```{r, include=FALSE}
 
 
 #########################################
@@ -145,25 +154,12 @@ drgdata$Provider_ID <- as.numeric(drgdata$Provider_ID)
 drgdata$PercentCMSperDischarge <- as.numeric(drgdata$PercentCMSperDischarge )
 drg.ser <- drgdata %>% left_join(serdata.subset, by=c("Provider_ID", "MDC"))
 
-###############################
-#Additional Analysis if needed#
-###############################
-FH.drg.ser <- drg.ser %>% filter(FH == "Yes")
-WI.drg.ser <- drg.ser %>% filter(ProviderState == "WI")
+```
+
+The Medicare spending by claim dataset is transformed to match payment episode period and claim type back to the Medicare Hospital Spending dataset above. 
 
 
-fh.drg.ser.plot <- ggplot(data=subset(FH.drg.ser, !is.na(QualityScore)), aes(x=QualityScore, y=PercentCMSperDischarge, color=measurename, fill=measurename)) + geom_jitter() + scale_y_continuous() +
-  scale_color_manual(values=c("#ff0000", "#ffaa00","#696870","#0d00ff")) +
-  labs(title="Quality score by percent CMS rembursement and measure (FH)")
-
-fh.drg.ser.plot
-
-wi.drg.ser.plot <- ggplot(data=subset(WI.drg.ser, !is.na(QualityScore)), aes(x=QualityScore, y=PercentCMSperDischarge, color=measurename, fill=measurename)) + geom_jitter() + scale_y_continuous() +
-  scale_color_manual(values=c("#ff0000", "#ffaa00","#696870","#0d00ff")) +
-  labs(title="Quality score by percent CMS rembursement and measure (WI)")
-
-wi.drg.ser.plot
-
+```{r, include=FALSE}
 
 #########################################
 #                                       #
@@ -200,9 +196,12 @@ hspdata.original <- hspdata
 hsp.recast <- recast(hspdata, Provider_ID ~ variable + CLAIM_TYPE + PERIOD, id.var = c("Provider_ID", "CLAIM_TYPE", "PERIOD"))
 hsp.no.duplicate <- hsp.recast[!duplicated(as.list(hsp.recast))]
 
+```
 
 
-#########################################
+
+```{r, include=FALSE}
+######################################### (Pick one)
 #                                       #
 #        Getting a Little Boost         #
 #                                       #
@@ -273,29 +272,33 @@ y <- as.numeric(y)
 bst <- xgboost(data = x, label = y, max.depth = 6, eta = 0.3, nthread = 4, nrounds = 50,objective = "binary:logistic")
 
 importance <- xgb.importance(feature_names = colnames(x), model = bst)
-importance
-xgb.plot.importance(importance_matrix = importance)
+#importance
+
 
 #prediction on the test set: 
 pred <- predict(bst, data.matrix(test[,-45]))
 #convert regression into binary classification:
 prediction <- as.numeric(pred > 0.5)
 err <- mean(as.numeric(pred > 0.5) != test$Highvalue)
-print(paste("test-error=", err))
+#print(paste("test-error=", err))
 
 #confusion Matrix
-
-confusionMatrix(as.factor(prediction), as.factor(test$Highvalue))
+#confusionMatrix(as.factor(prediction), as.factor(test$Highvalue))
 
 #ROC
-pred1 <- prediction(prediction, test$Highvalue)
-perf1 <- performance(pred1, "tpr", "fpr")
-plot(perf1)
+#pred1 <- prediction(prediction, test$Highvalue)
+#perf1 <- performance(pred1, "tpr", "fpr")
+#plot(perf1)
+
+
+```
 
 
 
+```{r, include=FALSE}
 
-#########################################
+
+######################################### (Pick one)
 #                                       #
 #    This seems like a regression       #
 #                                       #
@@ -358,43 +361,50 @@ summary(results)
 
 # dot plot comparison of accuracy from all models
 scales <- list(x=list(relation="free"), y=list(relation="free"))
-dotplot(results, scales=scales)
+#dotplot(results, scales=scales)
 
 importance.rf <- varImp(fit.rf, scale = FALSE)
-plot(importance.rf)
+#plot(importance.rf)
 #View(fit.rf)
 
+importance.lda <- varImp(fit.lda, scale = FALSE)
 
-#Running with LDA on this one
+```
 
-#                   -------------------------------------REBUILD TO USE XGB FEATURES
+## Model Comparison 
 
-# importance.lda <- varImp(fit.lda, scale = FALSE)
-# plot(importance.lda)
-# 
-# # Testing the prediction on the testing data and creating a confusion matrix
-# lda.prediction <- predict(fit.lda, glm.test)
-# confusionMatrix(lda.prediction,glm.test$Highvalue)
-# 
-# # Checking performance of just the top 5 features: 
-# lda.top5 <- (train(Highvalue~
-#                      AVG_SPNDG_PER_EP_HOSPITAL_SkilledRN_After +
-#                      PERCENT_OF_SPNDG_HOSPITAL_IP_During +
-#                      PERCENT_OF_SPNDG_HOSPITAL_IP_After +
-#                      PERCENT_OF_SPNDG_HOSPITAL_SkilledRN_Before +
-#                      PERCENT_OF_SPNDG_HOSPITAL_Carrier_After +
-#                      AVG_SPNDG_PER_EP_HOSPITAL_Hospice_After,
-#                    data = glm.train, method="lda", metric = metric, trControl=control)) 
-# 
-# lda.top5
-# 
-# lda.top.prediction <- predict(lda.top5, glm.test)
-# confusionMatrix(lda.top.prediction, glm.test$Highvalue)
+Using the Caret package: General Linear Model (GLM), Linear Discriminant Analysis (LDA), Recursive Partitioning and Regression Trees (RPART), k-nearest neighbors (KNN), Support Vector Machines (SVM), Random Forest (RF) were all evaluated for highest accuracy. 
+```{r,echo=FALSE}
+
+dotplot(results, scales=scales)
+
+```
 
 
+## Feature Importance (LDA)
+
+```{r,echo=FALSE}
+
+plot(importance.lda)
+
+```
 
 
-#########################################
+## Feature Importance (XGBoost)
+
+XGBoost was also performed, using the XGBoost package.
+
+```{r,echo=FALSE}
+
+xgb.plot.importance(importance_matrix = importance)
+
+```
+
+
+
+```{r, include=FALSE}
+
+######################################### (Used)
 #                                       #
 #       Split violin plotting           #
 #                                       #
@@ -447,11 +457,11 @@ HSP.xgb.w.ser$local <- (ifelse(HSP.xgb.w.ser$Provider_ID == '520177', "FH",
 
 HSP.xgb.w.ser$Highvalue <- (ifelse(HSP.xgb.w.ser$Highvalue == '1', "High Value", "Non-Value"))
 
-#CSV for to excel
-#HSP.SER.CSV <- HSP.xgb.w.ser %>% left_join(serdata.sub.xgb, by=c("Provider_ID"))
-#write.csv(HSP.SER.CSV, file = "HSPCER.csv")
+```
 
-#########################################
+
+```{r, include=FALSE}
+######################################### (Shown)
 #                                       #
 #      XGB Split violin plotting        #
 #                                       #
@@ -488,7 +498,7 @@ hsp.xgb.violin <- top10features %>% gather(-Highvalue, -FH, key = "var", value =
                                     geom_boxplot(width=0.1) + 
                                     facet_wrap(~ var, scales = "free")
 
-hsp.xgb.violin
+
 
 hsp.xgb.violin.fh <- top10features %>% gather(-Highvalue, -FH, key = "var", value = "value") %>% 
                                        ggplot(aes(x=as.factor(FH), y = value, fill = Highvalue)) + 
@@ -496,11 +506,14 @@ hsp.xgb.violin.fh <- top10features %>% gather(-Highvalue, -FH, key = "var", valu
                                        geom_boxplot(width=0.1) + 
                                        facet_wrap(~ var, scales = "free")
 
-hsp.xgb.violin.fh
-#ggplot(top10features, aes(x=as.factor(Highvalue), y = AVG_SPNDG_PER_EP_HOSPITAL_Carrier_Before, fill = FH)) + geom_split_violin()
 
 
-#########################################
+```
+
+
+```{r, include=FALSE}
+
+######################################### (Not used)
 #                                       #
 #       GLM Split violin plotting       #
 #                                       #
@@ -538,7 +551,7 @@ hsp.glm.violin <- glm.top10features %>% gather(-Highvalue, -FH, key = "var", val
   facet_wrap(~ var, scales = "free") + 
   scale_fill_manual(values = c("#094897","#398c1d"))
 
-plot(hsp.glm.violin)
+#plot(hsp.glm.violin)
 
 hsp.glm.bar.fh <- ggplot(data = glm.top10features %>% gather(-Highvalue, -FH, key = "var", value = "value"), 
                          aes(x=as.factor(Highvalue), y = value, fill = FH)) + 
@@ -546,19 +559,12 @@ hsp.glm.bar.fh <- ggplot(data = glm.top10features %>% gather(-Highvalue, -FH, ke
                          stat_summary(aes(label=round(..y..,2)), fun.y=mean, geom="text", size=3,vjust = -0.5) + 
                          facet_wrap(~ var, scales = "free") + scale_fill_manual(values = c("#094897","#398c1d"))
 
-plot(hsp.glm.bar.fh)
+#plot(hsp.glm.bar.fh)
+
+```
 
 
-#hsp.glm.bar.local <- ggplot(data = glm.top10features %>% gather(-Highvalue, -local, key = "var", value = "value"), 
-#                      aes(x=as.factor(Highvalue), y = value, fill = local)) + 
-#                      geom_bar(position = "dodge", stat = "summary", fun.y = "mean") +
-#                      facet_wrap(~ var, scales = "free")
-
-#plot(hsp.glm.bar.local)
-
-
-
-
+```{r, include=FALSE}
 #########################################
 #                                       #
 #       Putting the Story Together      #
@@ -636,24 +642,6 @@ fh.high.wide <- fh.value.subset %>% left_join(high.value.drg.avg, by=c("DRGDefin
 fh.high.wide$delta <- (fh.high.wide$`High Value Patient Burden` - fh.high.wide$patientburden)
 fh.high.wide$Percent_Delta <- (((fh.high.wide$`High Value Patient Burden` - fh.high.wide$patientburden) / fh.high.wide$`High Value Patient Burden`) * 100)
 
-#
-# ----------------------------------------------------------------------------------This PLOT IS EVIL, DESTROY
-#
-
-#Plot all FH DRG percent delta from high value providers average patient burdent per DRG
-# fh.high.wide.delta.plot <- ggplot(data=fh.high.wide,
-#                                   aes(x=DRGDefinition, y=Percent_Delta, group = 1)) + 
-#                                   theme(axis.text.x = element_text(angle = 45)) +
-#                                   geom_jitter() + 
-#                                   geom_smooth(method = "lm", show.legend = TRUE) + 
-#                                   ylim(-750,50) + #scale_y_continuous() +
-#                                   labs(title="Percent Decrease in Patient Burden per DRG", 
-#                                        subtitle="Difference Between Froedtert Patient Burden per DRG and High Value Providers (National AVG)",
-#                                        y="Percent Decrease in Patient Burden", 
-#                                        x="DRG", 
-#                                        caption="Band Represents 95% Confidence Interval")
-# 
-# plot(fh.high.wide.delta.plot)
 
 
 #column 40 is patient burden
@@ -677,7 +665,7 @@ fh.mdc.box <- fh.high.wide %>% select(MDC, patientburden) %>%
                                     axis.text.x=element_text(colour="white"), axis.text.y=element_text(colour="white"), 
                                     axis.title=element_text(colour="white"))
 
-grid.arrange(high.mdc.box,fh.mdc.box, ncol = 2, nrow = 1)
+#grid.arrange(high.mdc.box,fh.mdc.box, ncol = 2, nrow = 1)
 
 
 high.fh.mdc.box <- ggplot(fh.high.wide, aes(MDC)) +                    
@@ -688,19 +676,9 @@ high.fh.mdc.box <- ggplot(fh.high.wide, aes(MDC)) +
                                y="Patient Burden", 
                                x="Major Diagnostic Category", 
                                caption="Blue: High Value Providers, Red: FH") 
-#scale_color_manual(name="Provider", 
-#                                              labels = c("High Value (avg)", 
-#                                                         "Froedtert"), 
-#                                              values = c("High Value (avg)"="blue", 
-#                                                         "Froedtert" = "red"))
-high.fh.mdc.box
 
 
-#########################################
-#                                       #
-#       Final Graph...graphics          #
-#                                       #
-#########################################
+
 
 
 melt.hfhvs <- melt(fh.high.wide, id=c("DRGDefinition"), measure.vars=c("patientburden", "High Value Patient Burden"), variable.name="Provider",value.name="patientburden")
@@ -709,24 +687,6 @@ melt.hfhvs$Name <- (ifelse(melt.hfhvs$Provider %in% "patientburden", 'Froedtert'
 melt.hfhvs$drgID <- substr(melt.hfhvs$DRGDefinition, start = 1, stop = 3)
 melt.hfhvs$MDC <- DRGtoMDC$MDC[match(melt.hfhvs$drgID, DRGtoMDC$`MS-DRG`)]
 
-
-#
-# ------------------------REPLACe WITH BAR GRAPH
-#
-
-
-melt.hfhvs.plot <- melt.hfhvs %>% select(drgID, Name, patientburden) %>% 
-                                  ggplot(aes(x=drgID, y=patientburden ,color = Name)) + 
-                                  theme(axis.text.x = element_text(angle = 45)) +
-                                  geom_jitter(shape=21) + 
-                                  scale_color_manual(values = c("#094897","#398c1d")) + 
-                                  scale_y_log10() +
-                                  labs(title="Patient Burden per DRG", 
-                                       subtitle="Froedtert and High Value Proviers (National AVG)",
-                                       y="Patient Burden", 
-                                       x="DRG")
-# donot include
-#plot(melt.hfhvs.plot)
 
 g1 <- ggplot(melt.hfhvs, aes(x = patientburden, fill = Name)) + 
               geom_density(alpha = 0.7) + 
@@ -751,12 +711,20 @@ melt.hfhvs.plot.bar <- melt.hfhvs %>% select(drgID, Name, patientburden) %>%
 
 
 
-g1
-g2
+
+```
+
+```{r,echo=FALSE, warning = FALSE, fig.height=8, fig.width=14}
+
 grid.arrange(melt.hfhvs.plot.bar, g1, g2, widths = c(4, 2, 2),
              layout_matrix = rbind(c(1, 2),
                                    c(1, 3)))
 
+
+```
+
+
+```{r, include=FALSE}
 
 #########################################
 #                                       #
@@ -772,7 +740,7 @@ glm.bar.final <- ggplot(data = glm.top10features %>% gather(-Highvalue, -FH, key
                         theme(axis.text.x = element_text(angle = 45)) + 
                         scale_fill_manual(values = c("#094897","#398c1d")) 
 
-plot(glm.bar.final)
+#plot(glm.bar.final)
 
 #Creating Dataframe of just FH and High Value providers for closer analysis
 glm.bar.data <- glm.top10features
@@ -843,67 +811,10 @@ bar6 <- ggplot(data=glm.bar.HVFH, aes(x=HVFH, y=`Avg spending per hospice claim 
                    x="", 
                    caption = "1 through 30 days After Discharge from Index Hospital \n Admission, Hospice Claim Type")
 
+```
+
+```{r,echo=FALSE, fig.height=10, fig.width=12}
 
 grid.arrange(bar1,bar2,bar3,bar5,bar6, ncol=3, nrow=2)
 
-bar1
-bar2
-bar3
-bar5
-bar6
-#########################################
-#                                       #
-#     Does Index admission spending     #
-#     impact after discharge spending?
-#     Actually, no not really... 
-#                                       #
-#########################################
-
-
-IP.After.spending <- HSP.xgb.w.ser
-write.csv(IP.After.spending, file = "IP_After.csv")
-
-
-
-#high.value.drg.avg <- aggregate(high.value.subset[, 41], list(high.value.subset$DRGDefinition), mean)
-#non.value.drg.avg <- aggregate(non.value.subset[, 41], list(non.value.subset$DRGDefinition), mean)
-#fh.high.wide$BurdenDelta <- (fh.high.wide$patientburden.y - fh.high.wide$patientburden.x)
-#fh.high.burdenbyDRG <- fh.high.wide[c(1,14,24,26,82)]
-#rm(fh.high.wide,fh.high.burdenbyDRG)
-
-#########################################
-#                                       #
-#               LANDFILL                #
-#                                       #
-#########################################
-#
-#
-#
-#Quality Rank score Table
-#	#	#	#	#	#	#	#
-#	#	#	#	#	#	#	#
-#	Not Available	Rank 0-10 high = 10		0-10 high = 10	#	AVG score: 	#
-#	Average mortality 	5	 average payment	5	#	5	#
-#	Average mortality 	5	 higher payment	0	#	2.5	#
-#	Average complications 	5	 average payment	5	#	5	#
-#	Average mortality 	5	 lower payment	10	#	7.5	#
-#	Worse complications 	0	 higher payment	0	#	0	#
-#	Worse mortality 	0	 average payment	5	#	2.5	#
-#	Better mortality 	10	 higher payment	0	#	5	#
-#	Average complications 	5	 higher payment	0	#	2.5	#
-#	Average complications 	5	 lower payment	10	#	7.5	#
-#	Worse mortality 	0	 higher payment	0	#	0	#
-#	Better mortality 	10	 average payment	5	#	7.5	#
-#	Worse mortality 	0	 lower payment	10	#	5	#
-#	Better mortality 	10	 lower payment	10	#	10	#
-#	Better complications 	10	 lower payment	10	#	10	#
-#	Worse complications 	0	 lower payment	10	#	5	#
-#	Better complications 	10	 average payment	5	#	7.5	#
-#	Worse complications 	0	 average payment	5	#	2.5	#
-#	Better complications 	10	 higher payment	0	#	5	#
-#	#	#	#	#	#	#	#
-
-
-
-
-
+```
