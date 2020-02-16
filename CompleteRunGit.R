@@ -37,11 +37,11 @@ library(reshape2)
 # zipdata <- read_csv("Data/zipdata.csv")
 # DRGtoMDC <- read_csv("C:/Users/hfmm4140/Downloads/Hackathon/Data/Data/DRGtoMDCfulltable.csv")
 
-hspdata <- read_csv("Medicare Spending by Claim.csv")
-drgdata <- read_csv("Medicare_Provider_Charge_Inpatient_DRGALL_FY2016.csv")
-serdata <- read_csv("Provider Value of Care - Hospital.csv")
-zipdata <- read_csv("Zip.csv")
-DRGtoMDC <- read_csv("DRGtoMDCfulltable.csv")
+hspdata <- read_csv("Data/Medicare Spending by Claim.csv")
+drgdata <- read_csv("Data/Medicare_Provider_Charge_Inpatient_DRGALL_FY2016.csv")
+serdata <- read_csv("Data/Provider Value of Care - Hospital.csv")
+zipdata <- read_csv("Data/Zip.csv")
+DRGtoMDC <- read_csv("Data/DRGtoMDCfulltable.csv")
 
 
 
@@ -228,7 +228,7 @@ hsp.recast.xgb <- recast(HSP.xgb, Provider_ID ~ variable + CLAIM_TYPE + PERIOD, 
 HSP.xgb <- hsp.recast.xgb
 
 #Average value scores by provider (funs is depreicated, but list is generating an error, I'm going to just live with this for now)
-serdata.sub.xgb <- serdata.subset %>% group_by(Provider_ID) %>% summarise_at(vars(-MDC,-measurename), funs(mean(., na.rm=TRUE)))
+serdata.sub.xgb <- serdata.subset %>% group_by(Provider_ID) %>% summarise_at(vars(-MDC,-measurename,-Provider_ID), funs(mean(., na.rm=TRUE)))
 
 serdata.sub.xgb$QualityScore <- as.numeric(serdata.sub.xgb$QualityScore)
 #high Value care boolean for values >7:
@@ -250,9 +250,14 @@ HSP.xgb <- lapply(HSP.xgb, function(x) as.numeric(as.character(x)))
 
 HSP.xgb <- as.data.frame(HSP.xgb)
 HSP.xgb <- na.omit(HSP.xgb)
-HSP.xgb$Highvalue <- as.factor(HSP.xgb$Highvalue)
+#HSP.xgb$Highvalue <- as.factor(HSP.xgb$Highvalue)
 HSP.xgb.w.ser <- HSP.xgb
 HSP.xgb <- subset(HSP.xgb, select = -c(Provider_ID, QualityScore))
+
+# Move label column to first position
+HSP.xgb <- HSP.xgb %>% select(Highvalue, everything())
+
+#HSP.xgb.matrix <- data.matrix(HSP.xgb)
 
 #Break into 70/30 test and training subsets:
 smp_size <- floor(0.70 * nrow(HSP.xgb))
@@ -260,24 +265,66 @@ train_ind <- sample(seq_len(nrow(HSP.xgb)), size = smp_size)
 train <- HSP.xgb[train_ind,]
 test <- HSP.xgb[-train_ind,]
 
+
+x.train = as.matrix(train)
+x.train.hv <- as.factor(train$Highvalue)
+y.test = as.matrix(test)
+
 ## XGBoost
-y <- subset(train, select = c(Highvalue))
-x <- subset(train, select = -c(Highvalue))
-x <- as.matrix(x)
-y <- as.matrix(y)
-y <- as.numeric(y)
+# y <- subset(train, select = c(Highvalue))
+# x <- subset(train, select = -c(Highvalue))
+# x <- as.matrix(x)
+# #y <- as.matrix(y)
+# y <- as.factor(y)
+
 
 #                              ----------------------------ADDITIONAL XGB TUNING HERE PLEASE
 # https://www.kaggle.com/c/grupo-bimbo-inventory-demand/discussion/23170
 
-bst <- xgboost(data = x, label = y, max.depth = 6, eta = 0.3, nthread = 4, nrounds = 50,objective = "binary:logistic")
+# Caret XGB Implementation for best tune parameters
+xgb_grid = expand.grid(
+  nrounds = 50,
+  eta = c(0.1, 0.05, 0.01),
+  max_depth = c(2, 3, 4, 5, 6, 8, 10, 12),
+  gamma = 0,
+  colsample_bytree=1,
+  min_child_weight=c(1, 2, 3, 4 ,5),
+  subsample=1
+)
 
-importance <- xgb.importance(feature_names = colnames(x), model = bst)
+control <- trainControl(method ="cv", number = 5)
+set.seed(333)
+
+xgb_caret <- train(x=x.train[,-c(1)], y=x.train[,c(1)], method='xgbTree', trControl= control, tuneGrid=xgb_grid) 
+
+
+xgb_caret$bestTune
+
+#nrounds max_depth eta gamma colsample_bytree min_child_weight subsample
+#111      50        10 0.1     0                1                1         1
+
+
+set.seed(333)
+bst <- xgboost(data = x.train[,-c(1)],
+               label = x.train[,c(1)],
+               max.depth = 10,
+               eta = 0.1,
+               nthread = 6, 
+               nrounds = 50,
+               early_stopping_rounds = 3,
+               min_child_weight=1,
+               objective = "binary:logistic")
+
+
+importance <- xgb.importance(feature_names = colnames(x.train), model = bst)
 importance
 xgb.plot.importance(importance_matrix = importance)
 
+xgb.plot.deepness(model = bst)
+
+
 #prediction on the test set: 
-pred <- predict(bst, data.matrix(test[,-45]))
+pred <- predict(bst, as.matrix(y.test[,-c(1)]))
 #convert regression into binary classification:
 prediction <- as.numeric(pred > 0.5)
 err <- mean(as.numeric(pred > 0.5) != test$Highvalue)
@@ -291,8 +338,11 @@ confusionMatrix(as.factor(prediction), as.factor(test$Highvalue))
 pred1 <- prediction(prediction, test$Highvalue)
 perf1 <- performance(pred1, "tpr", "fpr")
 plot(perf1)
+abline(a=0, b= 1)
 
 
+pred1.auc = performance(pred1, measure = "auc", fpr.stop=0.1)
+pred1.auc@y.values
 
 
 #########################################
@@ -345,6 +395,7 @@ metric <- "Accuracy"
 #importance.lvq <- varImp(model, scale=FALSE)
 #test <- as.data.frame(test)
 #print(importance.lvq)
+
 
 fit.glm <- train(Highvalue~., data = glm.train, method="glm", metric=metric, trControl=control)
 fit.lda <- train(Highvalue~., data = glm.train, method="lda", metric=metric, trControl=control)
@@ -485,18 +536,22 @@ colnames(top10features)[colnames(top10features)=="AVG_SPNDG_PER_EP_HOSPITAL_IP_D
 hsp.xgb.violin <- top10features %>% gather(-Highvalue, -FH, key = "var", value = "value") %>% 
                                     ggplot(aes(x=as.factor(Highvalue), y = value, fill = FH)) + 
                                     geom_split_violin() + 
-                                    geom_boxplot(width=0.1) + 
-                                    facet_wrap(~ var, scales = "free")
+                                    geom_boxplot(width=0.2) + 
+                                    facet_wrap(~ var, scales = "free") +
+                                    scale_fill_manual(values = c("#094897","#398c1d"))
 
 hsp.xgb.violin
 
 hsp.xgb.violin.fh <- top10features %>% gather(-Highvalue, -FH, key = "var", value = "value") %>% 
                                        ggplot(aes(x=as.factor(FH), y = value, fill = Highvalue)) + 
                                        geom_split_violin() + 
-                                       geom_boxplot(width=0.1) + 
-                                       facet_wrap(~ var, scales = "free")
+                                       geom_boxplot(width=0.2) + 
+                                       facet_wrap(~ var, scales = "free") +
+                                       scale_fill_manual(values = c("#094897","#398c1d"))
 
 hsp.xgb.violin.fh
+
+
 #ggplot(top10features, aes(x=as.factor(Highvalue), y = AVG_SPNDG_PER_EP_HOSPITAL_Carrier_Before, fill = FH)) + geom_split_violin()
 
 
