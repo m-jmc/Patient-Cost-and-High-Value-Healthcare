@@ -3,13 +3,6 @@
 
 Once the datasets are loaded, we use the Medicare Provider Charge Inpatient data to calculate the average covered charges, total payments, and Medicare payments. These are also calculated per discharge to find the percent of the total bill paid by CMS.
 
-Datasets can be found below: <br>
-DRG Data: https://data.cms.gov/inpatient-provider-lookup/view-data <br>
-HSP Data: https://data.medicare.gov/Hospital-Compare/Medicare-Hospital-Spending-by-Claim/nrth-mfg3 <br>
-Provider (SER): https://data.medicare.gov/Hospital-Compare/Payment-and-value-of-care-Hospital/c7us-v4mf <br>
-Zip: https://public.opendatasoft.com/explore/dataset/us-zip-code-latitude-and-longitude/export/ <br>
-*Note: The CSV's provided reflect modified headers (spaces removes) not included in the script here.* <br>
-
 In order to coalesce data from across these datasets, the "Payment Measure ID" is assigned an inferred "Major Diagnostic Category" (MDC) allowing the quality outcome score to be mapped to the CMS Inpatient provider data via corresponding MDC and DRG. In the provider payment and value of care hospital dataset, the Medicare "Value of Care Category" is translated into a numerical risk score. This forms the indication of value used throughout the analysis (see script for translation details). 
 
 
@@ -119,3 +112,13 @@ AUC Value
 
 
 ![](Patient_Cost_and_High_Value_Healthcare_files/figure-html/unnamed-chunk-19-1.png)<!-- -->
+
+
+
+Datasets can be found below: <br>
+DRG Data: https://data.cms.gov/inpatient-provider-lookup/view-data <br>
+HSP Data: https://data.medicare.gov/Hospital-Compare/Medicare-Hospital-Spending-by-Claim/nrth-mfg3 <br>
+Provider (SER): https://data.medicare.gov/Hospital-Compare/Payment-and-value-of-care-Hospital/c7us-v4mf <br>
+Zip: https://public.opendatasoft.com/explore/dataset/us-zip-code-latitude-and-longitude/export/ <br>
+*Note: The CSV's provided reflect modified headers (spaces removes) not included in the script here.* <br>
+
