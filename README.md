@@ -1,16 +1,3 @@
----
-title: "Patient Cost and High Value Healthcare"
-author: "Mike"
-date: "2/11/2020"
-output: 
-  html_document:
-    toc: TRUE
-    keep_md: TRUE
-
-
----
-
-
 
 ## Executive Summary
 
@@ -151,7 +138,7 @@ The resulting top 10 features, in order of relative importance are shown below:
 
 ## XGBoost Model Performance
 
-XGBoost attained the highest accuracy of the models tested at 94.8%, with good sensitivity / recall (true positive rate), F1-score of 97.26% and statistical significance (P-value < 0.05%). Low specificity is not overly concerning in this application.
+XGBoost attained the highest accuracy of the models tested at 94.8%, with good sensitivity / recall (true positive rate), F1-score of 97.26% but insignificant statistical performance (P-value > 0.05%). Low specificity is not overly concerning in this application.
 
 
 ```
