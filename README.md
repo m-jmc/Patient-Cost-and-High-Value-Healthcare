@@ -128,8 +128,8 @@ XGBoost hyperparameter tuning was perfored using the caret implementation. Howev
 
 
 ```
-##    nrounds max_depth eta gamma colsample_bytree min_child_weight subsample
-## 84      50         2 0.1     0                1                4         1
+##     nrounds max_depth eta gamma colsample_bytree min_child_weight subsample
+## 113      50        10 0.1     0                1                3         1
 ```
 
 The resulting top 10 features, in order of relative importance are shown below:
@@ -138,7 +138,7 @@ The resulting top 10 features, in order of relative importance are shown below:
 
 ## XGBoost Model Performance
 
-XGBoost attained the highest accuracy of the models tested at 94.8%, with good sensitivity / recall (true positive rate), F1-score of 97.26% but overall not statistically significant (P-value > 0.05%) which likely reflects the lack of availible data. Low specificity is not overly concerning in this application.
+XGBoost attained the highest accuracy of the models tested at 94.8%, with good sensitivity / recall (true positive rate), F1-score of 97.26% but insignificant statistical performance (P-value > 0.05%). Low specificity is not overly concerning in this application.
 
 
 ```
@@ -146,26 +146,26 @@ XGBoost attained the highest accuracy of the models tested at 94.8%, with good s
 ## 
 ##           Reference
 ## Prediction   0   1
-##          0 839  34
-##          1  17  18
+##          0 844  38
+##          1  13  13
 ##                                           
 ##                Accuracy : 0.9438          
 ##                  95% CI : (0.9268, 0.9579)
-##     No Information Rate : 0.9427          
-##     P-Value [Acc > NIR] : 0.47992         
+##     No Information Rate : 0.9438          
+##     P-Value [Acc > NIR] : 0.5371645       
 ##                                           
-##                   Kappa : 0.3855          
+##                   Kappa : 0.3115          
 ##                                           
-##  Mcnemar's Test P-Value : 0.02506         
+##  Mcnemar's Test P-Value : 0.0007775       
 ##                                           
-##             Sensitivity : 0.9801          
-##             Specificity : 0.3462          
-##          Pos Pred Value : 0.9611          
-##          Neg Pred Value : 0.5143          
-##              Prevalence : 0.9427          
-##          Detection Rate : 0.9240          
-##    Detection Prevalence : 0.9615          
-##       Balanced Accuracy : 0.6631          
+##             Sensitivity : 0.9848          
+##             Specificity : 0.2549          
+##          Pos Pred Value : 0.9569          
+##          Neg Pred Value : 0.5000          
+##              Prevalence : 0.9438          
+##          Detection Rate : 0.9295          
+##    Detection Prevalence : 0.9714          
+##       Balanced Accuracy : 0.6199          
 ##                                           
 ##        'Positive' Class : 0               
 ## 
