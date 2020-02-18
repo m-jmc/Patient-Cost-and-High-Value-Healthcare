@@ -1,3 +1,4 @@
+
 ## Executive Summary
 
 With an increasingly competitive healthcare market, systems will be forced to compete on value. By increasing provider value and lowering cost to the patient (patient burden) Froedtert can maximize its competitiveness in the regional market.
@@ -17,6 +18,7 @@ How does F&MCW compare to other health systems across the country when it comes 
 Once the datasets are loaded, we use the “Medicare Provider Charge Inpatient DRG ALL FY 2016” (DRG Dataset) to calculate the average covered charges, total payments, and Medicare payments. These are also calculated per discharge to find the percent of the total bill paid by CMS. Patient cost burden was determined calculating the difference between the “Average Total Payments” and “Average Medicare Payments” to arrive at the remaining patient balance. 
 
 ***
+
 
 Table: Medicare Provider Charge Inpatient data FY2016
 
@@ -43,6 +45,7 @@ In the "Provider Value of Care - Hospital"  (SER Data) dataset, the Medicare "Va
 
 ***
 
+
 Table: Provider Value of Care - Hospital
 
  ProviderID  Hospitalname             Address              City        State    ZIPCode  Countyname   Phonenumber      Paymentmeasurename                  PaymentmeasureID   Paymentcategory             Denominator     Payment         Lowerestimate   Higherestimate   Paymentfootnote                                          Valueofcaredisplayname               ValueofcaredisplayID   Valueofcarecategory   Valueofcarefootnote                                      Measurestartdate   Measureenddate 
@@ -55,14 +58,12 @@ Table: Provider Value of Care - Hospital
 
 
 
-**A quick plot of CMS reimbursement by quality does not show a direct relationship. We do see that FH quality for the Pneumonia episode claim types is higher than other episode claim types.**
-
-
 
 
 The Medicare spending by claim (HSP) dataset is transformed to match payment episode period and claim type back to the Medicare Hospital Spending (DRG) dataset above. 
 
 ***
+
 
 Table: Medicare Spending by Claim
 
@@ -95,12 +96,12 @@ SOUTHEAST ALABAMA MEDICAL CENTER          10001  AL      1 to 3 days Prior to In
 <br>
 <br>
 
-Overview of difference in patient burden between F&MCW and "High Value" healthcare providers. This shows that per DRG (left), overall (Upper Right), and per MDC (lower right) high value providers have lower patient cost burden. F&MCW has 188 DRG's represented in the dataset, of those 91% (172 of 188) have opportunity for value improvement. With total payments at $121.2 million, opportunity for value improvement is just over 21 million.
+Overview of difference in patient burden between F&MCW and "High Value" healthcare providers. This shows that per DRG (top), overall (lower left), and per MDC (lower right) high value providers have lower patient cost burden. F&MCW has 188 DRG's represented in the dataset, of those 91% (172 of 188) have opportunity for value improvement. With total payments at $121.2 million, opportunity for value improvement is just over 21 million.
 
 
 <br>
 
-![](Patient-Cost-and-High-Value-Healthcare_files/figure-html/unnamed-chunk-14-1.png)<!-- -->
+![](Patient-Cost-and-High-Value-Healthcare_files/figure-html/unnamed-chunk-13-1.png)<!-- -->![](Patient-Cost-and-High-Value-Healthcare_files/figure-html/unnamed-chunk-13-2.png)<!-- -->
 
 <br>
 <br>
@@ -111,7 +112,7 @@ To determine the most important episode spending characteristics of high value p
 
 General Linear Model (GLM), Linear Discriminant Analysis (LDA), Recursive Partitioning and Regression Trees (RPART), k-nearest neighbors (KNN), Support Vector Machines (SVM), Random Forest (RF) were all evaluated for highest accuracy. (XGBoost was performed seperately using the XGBoost package and is not shown here).
 
-![](Patient-Cost-and-High-Value-Healthcare_files/figure-html/unnamed-chunk-15-1.png)<!-- -->
+![](Patient-Cost-and-High-Value-Healthcare_files/figure-html/unnamed-chunk-14-1.png)<!-- -->
 
 
 
@@ -127,13 +128,13 @@ XGBoost hyperparameter tuning was perfored using the caret implementation. Howev
 
 
 ```
-##    nrounds max_depth  eta gamma colsample_bytree min_child_weight subsample
-## 53      50         4 0.05     0                1                3         1
+##    nrounds max_depth eta gamma colsample_bytree min_child_weight subsample
+## 84      50         2 0.1     0                1                4         1
 ```
 
 The resulting top 10 features, in order of relative importance are shown below:
 
-![](Patient-Cost-and-High-Value-Healthcare_files/figure-html/unnamed-chunk-18-1.png)<!-- -->
+![](Patient-Cost-and-High-Value-Healthcare_files/figure-html/unnamed-chunk-17-1.png)<!-- -->
 
 ## XGBoost Model Performance
 
@@ -145,26 +146,26 @@ XGBoost attained the highest accuracy of the models tested at 94.8%, with good s
 ## 
 ##           Reference
 ## Prediction   0   1
-##          0 841  36
-##          1  12  19
+##          0 839  34
+##          1  17  18
 ##                                           
-##                Accuracy : 0.9471          
-##                  95% CI : (0.9305, 0.9608)
-##     No Information Rate : 0.9394          
-##     P-Value [Acc > NIR] : 0.1838161       
+##                Accuracy : 0.9438          
+##                  95% CI : (0.9268, 0.9579)
+##     No Information Rate : 0.9427          
+##     P-Value [Acc > NIR] : 0.47992         
 ##                                           
-##                   Kappa : 0.4164          
+##                   Kappa : 0.3855          
 ##                                           
-##  Mcnemar's Test P-Value : 0.0009009       
+##  Mcnemar's Test P-Value : 0.02506         
 ##                                           
-##             Sensitivity : 0.9859          
-##             Specificity : 0.3455          
-##          Pos Pred Value : 0.9590          
-##          Neg Pred Value : 0.6129          
-##              Prevalence : 0.9394          
-##          Detection Rate : 0.9262          
-##    Detection Prevalence : 0.9659          
-##       Balanced Accuracy : 0.6657          
+##             Sensitivity : 0.9801          
+##             Specificity : 0.3462          
+##          Pos Pred Value : 0.9611          
+##          Neg Pred Value : 0.5143          
+##              Prevalence : 0.9427          
+##          Detection Rate : 0.9240          
+##    Detection Prevalence : 0.9615          
+##       Balanced Accuracy : 0.6631          
 ##                                           
 ##        'Positive' Class : 0               
 ## 
@@ -176,7 +177,7 @@ XGBoost attained the highest accuracy of the models tested at 94.8%, with good s
 
 Focusing in on the top 5 features (for brevity), Violin plots show the distribution of episode spending between high-value, and non-high value providers (FH spending shown in blue). 
 
-![](Patient-Cost-and-High-Value-Healthcare_files/figure-html/unnamed-chunk-21-1.png)<!-- -->
+![](Patient-Cost-and-High-Value-Healthcare_files/figure-html/unnamed-chunk-20-1.png)<!-- -->
 
 
 
@@ -184,7 +185,7 @@ Focusing in on the top 5 features (for brevity), Violin plots show the distribut
 
 Comparing FH rates to those of High-value providers only we more clearly see the areas of opportunity for reducing patient cost burden. For example, high-value providers spend more during the inpatient admission but less in total average episode spending. Additionally, F&MCW should more closely evaluate ways to reduce average spending in post acute care (Inpatient post-admission and hospice claims) in addition to reducing ambulatory and ancillary services prior to admission (carrier claim pre-admission).
 
-![](Patient-Cost-and-High-Value-Healthcare_files/figure-html/unnamed-chunk-23-1.png)<!-- -->
+![](Patient-Cost-and-High-Value-Healthcare_files/figure-html/unnamed-chunk-22-1.png)<!-- -->
 
 
 ## Data
