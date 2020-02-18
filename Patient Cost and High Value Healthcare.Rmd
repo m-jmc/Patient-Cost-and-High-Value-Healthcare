@@ -315,7 +315,9 @@ HSP.xgb <- HSP.xgb %>% select(Highvalue, everything())
 #HSP.xgb.matrix <- data.matrix(HSP.xgb)
 
 #Break into 70/30 test and training subsets:
+set.seed(1234)
 smp_size <- floor(0.70 * nrow(HSP.xgb))
+set.seed(1234)
 train_ind <- sample(seq_len(nrow(HSP.xgb)), size = smp_size)
 train <- HSP.xgb[train_ind,]
 test <- HSP.xgb[-train_ind,]
@@ -349,7 +351,6 @@ xgb_grid = expand.grid(
 
 control <- trainControl(method ="cv", number = 5)
 set.seed(333)
-
 xgb_caret <- train(x=x.train[,-c(1)], 
                    y=x.train.hv, 
                    method='xgbTree', 
@@ -378,12 +379,13 @@ bst <- xgboost(data = x.train[,-c(1)],
 
 ####MERGE HERE
 
-
+set.seed(333)
 importance <- xgb.importance(model = bst)
 #importance
 
 
-#prediction on the test set: 
+#prediction on the test set:
+set.seed(333)
 pred <- predict(bst, as.matrix(y.test[,-c(1)]))
 #convert regression into binary classification:
 prediction <- as.numeric(pred > 0.5)
@@ -427,6 +429,7 @@ glm.data.nzv <- as.data.frame(glm.data.nzv)
 # to prevent multicollinearity 
 glm.data.nzv.cor <- cor(glm.data.nzv)
 summary(glm.data.nzv.cor[upper.tri(glm.data.nzv.cor)])
+set.seed(333)
 glmdnc <- findCorrelation(glm.data.nzv.cor, cutoff = .75)
 glm.data.nzv.nocor <- glm.data.nzv[,-glmdnc]
 
@@ -434,13 +437,17 @@ glm.data.nzv.nocor <- glm.data.nzv[,-glmdnc]
 glm.data.nzv.nocor.hv <- subset(glm.data.nzv.nocor, select = c(Highvalue))
 glm.data.nzv.nocor <- subset(glm.data.nzv.nocor, select = -c(Highvalue))
 
+set.seed(333)
 glm.data.preprocess <- preProcess(glm.data.nzv.nocor, method = c("center","scale"))
+set.seed(333)
 glm.preprocess <- predict(glm.data.preprocess,glm.data.nzv.nocor)
 glm.preprocess$Highvalue <- glm.data.nzv.nocor.hv$Highvalue
 glm.preprocess$Highvalue <- as.factor(glm.preprocess$Highvalue)
 
-# Create random 60/40 training and testing dataset
-smp_size <- floor(0.60 * nrow(glm.preprocess))
+# Create random 70/30 training and testing dataset
+set.seed(333)
+smp_size <- floor(0.70 * nrow(glm.preprocess))
+set.seed(333)
 train_ind <- sample(seq_len(nrow(glm.preprocess)), size = smp_size)
 glm.train <- glm.preprocess[train_ind,]
 glm.test <- glm.preprocess[-train_ind,]
@@ -459,11 +466,17 @@ metric <- "Accuracy"
 #test <- as.data.frame(test)
 #print(importance.lvq)
 
+set.seed(333)
 fit.glm <- train(Highvalue~., data = glm.train, method="glm", metric=metric, trControl=control)
+set.seed(333)
 fit.lda <- train(Highvalue~., data = glm.train, method="lda", metric=metric, trControl=control)
+set.seed(333)
 fit.cart <- train(Highvalue~., data = glm.train, method="rpart", metric=metric, trControl=control)
+set.seed(333)
 fit.knn <- train(Highvalue~., data = glm.train, method="knn", metric=metric, trControl=control)
+set.seed(333)
 fit.svm <- train(Highvalue~., data = glm.train, method="svmRadial", metric=metric, trControl=control)
+set.seed(333)
 fit.rf <- train(Highvalue~., data = glm.train, method="rf", metric=metric, trControl=control)
 
 results <- resamples(list(lda=fit.lda,cart=fit.cart,knn=fit.knn, svm=fit.svm,rf=fit.rf,glm=fit.glm))
