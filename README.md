@@ -6,7 +6,7 @@ Date: 2/11/2020
 
 ## Executive Summary
 
-With an increasingly competitive healthcare market, systems will be forced to compete on value. By increasing provider value and lowering cost to the patient (patient burden) Froedtert can maximize its competitiveness in the regional market.
+With an increasingly competitive healthcare market, systems will be forced to compete on value. By increasing provider value and lowering cost to the patient (patient burden) [Hospital system A] can maximize its competitiveness in the regional market.
 
 ## Case Prompt
 
