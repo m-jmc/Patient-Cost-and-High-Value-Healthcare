@@ -24,11 +24,7 @@ Once the datasets are loaded, we use the “Medicare Provider Charge Inpatient D
 
 
 
-Table: Medicare Provider Charge Inpatient data FY2016
-
-DRGDefinition                                                     ProviderId  ProviderName                     ProviderStreetAddress   ProviderCity   ProviderState    ProviderZipCode  HospitalReferralRegion(HRR)Description    TotalDischarges  AverageCoveredCharges   AverageTotalPayments   AverageMedicarePayments   FH   drgID   FHdrgflag   WI        ACC      ATP        AMP   ACCperDischarge   ATPperDischarge   AMPperDischarge  PercentCMSperDischarge 
----------------------------------------------------------------  -----------  -------------------------------  ----------------------  -------------  --------------  ----------------  ---------------------------------------  ----------------  ----------------------  ---------------------  ------------------------  ---  ------  ----------  ---  --------  -------  ---------  ----------------  ----------------  ----------------  -----------------------
-001 - HEART TRANSPLANT OR IMPLANT OF HEART ASSIST SYSTEM W MCC         10033  UNIVERSITY OF ALABAMA HOSPITAL   619 SOUTH 19TH STREET   BIRMINGHAM     AL                         35233  AL - Birmingham                                        13  $1,016,806.46           $296,937.00            $150,139.69               No   001     No          No    1016806   296937   150139.7          78215.88          22841.31          11549.21  14.77                  
+Table: Medicare Provider Charge Inpatient data FY2016               
 
 ***
 
@@ -49,11 +45,7 @@ In the "Provider Value of Care - Hospital"  (SER Data) dataset, the Medicare "Va
 
 
 
-Table: Provider Value of Care - Hospital
-
- ProviderID  Hospitalname             Address              City        State    ZIPCode  Countyname   Phonenumber      Paymentmeasurename                  PaymentmeasureID   Paymentcategory             Denominator     Payment         Lowerestimate   Higherestimate   Paymentfootnote                                          Valueofcaredisplayname               ValueofcaredisplayID   Valueofcarecategory   Valueofcarefootnote                                      Measurestartdate   Measureenddate 
------------  -----------------------  -------------------  ----------  ------  --------  -----------  ---------------  ----------------------------------  -----------------  --------------------------  --------------  --------------  --------------  ---------------  -------------------------------------------------------  -----------------------------------  ---------------------  --------------------  -------------------------------------------------------  -----------------  ---------------
-     190164  BYRD REGIONAL HOSPITAL   1020 FERTITTA BLVD   LEESVILLE   LA         71446  VERNON       (337) 239-9041   Payment for heart attack patients   PAYM_30_AMI        Number of Cases Too Small   Not Available   Not Available   Not Available   Not Available    1 - The number of cases/patients is too few to report.   Value of Care Heart Attack measure   MORT_PAYM_30_AMI       Not Available         1 - The number of cases/patients is too few to report.   7/1/2014           6/30/2017      
+Table: Provider Value of Care - Hospital    
 
 ***
 
@@ -68,10 +60,6 @@ The Medicare spending by claim (HSP) dataset is transformed to match payment epi
 
 
 Table: Medicare Spending by Claim
-
-HOSPITAL_NAME                       PROVIDER_ID  STATE   PERIOD                                          CLAIM_TYPE            AVG_SPNDG_PER_EP_HOSPITAL   AVG_SPNDG_PER_EP_STATE   AVG_SPNDG_PER_EP_NATIONAL  PERCENT_OF_SPNDG_HOSPITAL   PERCENT_OF_SPNDG_STATE   PERCENT_OF_SPNDG_NATIONAL    START_DATE   END_DATE
----------------------------------  ------------  ------  ----------------------------------------------  -------------------  --------------------------  -----------------------  --------------------------  --------------------------  -----------------------  --------------------------  -----------  ---------
-SOUTHEAST ALABAMA MEDICAL CENTER          10001  AL      1 to 3 days Prior to Index Hospital Admission   Home Health Agency                           21                       15                          13  0.10%                       0.08%                    0.06%                           1012017   12312017
 
 ***
 
