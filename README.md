@@ -1,7 +1,7 @@
 
-title: "Patient Cost and High Value Healthcare"
-author: "Mike"
-date: "2/11/2020"
+# "Patient Cost and High Value Healthcare"
+Name: Mike
+Date: 2/11/2020
 
 
 ## Executive Summary
