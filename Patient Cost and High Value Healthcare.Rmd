@@ -20,8 +20,8 @@ With an increasingly competitive healthcare market, systems will be forced to co
 
 ## Case Prompt
 
-*Acutely aware of the challenges outlined above F&MCW hospital executives and clinical leaders are interested seeing F&MCW’s “Medicare Value Story” – a data-driven narrative about F&MCW’s Medicare population trends. The core questions articulated by the executives are detailed below: 
-How does F&MCW compare to other health systems across the country when it comes to Medicare population trends (quality metrics, volume metrics, and cost metrics)? Where is F&MCW doing well and where do we have opportunities to improve? What additional insights can we derive from analyzing the large troves of public Medicare data provided by the Centers for Medicare and Medicaid (CMS)?*
+*Acutely aware of the challenges outlined above hospital executives and clinical leaders are interested seeing the “Medicare Value Story” – a data-driven narrative about Medicare population trends. The core questions articulated by the executives are detailed below: 
+How does [Hospital system A] compare to other health systems across the country when it comes to Medicare population trends (quality metrics, volume metrics, and cost metrics)? Where is the system doing well and where do we have opportunities to improve? What additional insights can we derive from analyzing the large troves of public Medicare data provided by the Centers for Medicare and Medicaid (CMS)?*
 
 
 
@@ -43,11 +43,11 @@ library(gridExtra)
 library(reshape2)
 library(knitr)
 
-hspdata <- read_csv("Medicare Spending by Claim.csv")
-drgdata <- read_csv("Medicare_Provider_Charge_Inpatient_DRGALL_FY2016.csv")
-serdata <- read_csv("Provider Value of Care - Hospital.csv")
-zipdata <- read_csv("Zip.csv")
-DRGtoMDC <- read_csv("DRGtoMDCfulltable.csv")
+hspdata <- read_csv("Data/Medicare Spending by Claim.csv")
+drgdata <- read_csv("Data/Medicare_Provider_Charge_Inpatient_DRGALL_FY2016.csv")
+serdata <- read_csv("Data/Provider Value of Care - Hospital.csv")
+zipdata <- read_csv("Data/Zip.csv")
+DRGtoMDC <- read_csv("Data/DRGtoMDCfulltable.csv")
 
 #Create column of FH locations in dataset
 drgdata$FH <- (ifelse(drgdata$ProviderId == '520177', "Yes", 
@@ -94,7 +94,6 @@ drgdata$PercentCMSperDischarge <- format(round(drgdata$PercentCMSperDischarge, 2
 
 Once the datasets are loaded, we use the “Medicare Provider Charge Inpatient DRG ALL FY 2016” (DRG Dataset) to calculate the average covered charges, total payments, and Medicare payments. These are also calculated per discharge to find the percent of the total bill paid by CMS. Patient cost burden was determined calculating the difference between the “Average Total Payments” and “Average Medicare Payments” to arrive at the remaining patient balance. 
 
-***
 
 ```{r, echo=FALSE, results='asis'}
 kable(drgdata[1:1, ], caption = "Medicare Provider Charge Inpatient data FY2016")
@@ -117,7 +116,6 @@ Designate Payment measure ID with MDC value | (MDC ID xxx DRG Range)
 
 In the "Provider Value of Care - Hospital"  (SER Data) dataset, the Medicare "Value of Care Category" is translated into a numerical risk score. This forms the indication of value used throughout the analysis (see script for translation details). High value providers were any who achieved a combined average score of >= 7.
 
-***
 
 ```{r, echo=FALSE, results='asis'}
 kable(serdata[1:1, ], caption = "Provider Value of Care - Hospital")
@@ -208,7 +206,6 @@ WI.drg.ser <- drg.ser %>% filter(ProviderState == "WI")
 
 The Medicare spending by claim (HSP) dataset is transformed to match payment episode period and claim type back to the Medicare Hospital Spending (DRG) dataset above. 
 
-***
 
 ```{r, echo=FALSE, results='asis'}
 kable(hspdata[1:1, ], caption = "Medicare Spending by Claim")
@@ -579,7 +576,9 @@ hsp.xgb.violin <- top5features %>% gather(-Highvalue, -FH, key = "var", value = 
                                     geom_split_violin() + 
                                     geom_boxplot(width=0.2) + 
                                     facet_wrap(~ var, scales = "free") +
-                                    scale_fill_manual(values = c("#094897","#398c1d"))
+                                    scale_fill_manual(values = c("#094897","#398c1d"), 
+                                                      name = "Hospital", 
+                                                      labels = c("Hospital A", "High Value"))
 
 
 
@@ -767,12 +766,16 @@ melt.hfhvs$MDC <- DRGtoMDC$MDC[match(melt.hfhvs$drgID, DRGtoMDC$`MS-DRG`)]
 
 g1 <- ggplot(melt.hfhvs, aes(x = patientburden, fill = Name)) + 
               geom_density(alpha = 0.7) + 
-              scale_fill_manual(values = c("#094897","#398c1d")) + 
-              labs(x="Patient Burden")
+              scale_fill_manual(values = c("#094897","#398c1d"), 
+                                                      name = "Hospital", 
+                                                      labels = c("Hospital A", "High Value")) + 
+              labs(x="Patient Burden") 
 
 g2 <- ggplot(melt.hfhvs, aes(x = MDC, y = patientburden, fill = Name)) + 
               geom_violin(alpha = 0.7) + geom_boxplot(width=0.1) + 
-              scale_fill_manual(values = c("#094897","#398c1d")) + 
+              scale_fill_manual(values = c("#094897","#398c1d"), 
+                                                      name = "Hospital", 
+                                                      labels = c("Hospital A", "High Value")) + 
               labs(x="Major Disease Category", y="Patient Burden")
 
 
@@ -780,9 +783,12 @@ melt.hfhvs.plot.bar <- melt.hfhvs %>% select(drgID, Name, patientburden) %>%
                         ggplot(aes(x=drgID, y=patientburden)) + 
                         theme(axis.text.x = element_text(angle = 45)) +
                         geom_col(aes(fill = Name)) + 
-                        scale_fill_manual(values = c("#094897","#398c1d")) +
+                        scale_fill_manual(values = c("#094897","#398c1d"), 
+                                                      name = "Patient Burden by DRG", 
+                                                      labels = c("Hospital A", "High Value")) +
+                        
                         labs(title="Patient Burden per DRG", 
-                             subtitle="Froedtert and High Value Proviers (National AVG)", 
+                             subtitle="[Hospital A] and National AVG High Value Proviers", 
                              y="Patient Burden", 
                              x="DRG")
 
@@ -793,7 +799,7 @@ melt.hfhvs.plot.bar <- melt.hfhvs %>% select(drgID, Name, patientburden) %>%
 <br>
 <br>
 
-Overview of difference in patient burden between F&MCW and "High Value" healthcare providers. This shows that per DRG (top), overall (lower left), and per MDC (lower right) high value providers have lower patient cost burden. F&MCW has 188 DRG's represented in the dataset, of those 91% (172 of 188) have opportunity for value improvement. With total payments at $121.2 million, opportunity for value improvement is just over 21 million.
+Overview of difference in patient burden between [Hospital A] and "High Value" healthcare providers. This shows that per DRG (top), overall (lower left), and per MDC (lower right) high value providers have lower patient cost burden. [Hospital A] has 188 DRG's represented in the dataset, of those 91% (172 of 188) have opportunity for value improvement. With total payments at $121.2 million, opportunity for value improvement is just over 21 million.
 
 
 <br>
@@ -864,7 +870,7 @@ bar1 <- ggplot(data=glm.bar.HVFH, aes(x=HVFH, y=`Avg spending per skilled RN cla
               theme(legend.position = "none", axis.text.x = element_text(angle = 45)) + 
               stat_summary(geom = "errorbar", fun.data = mean_se, position = "dodge", width=.2) +
               labs(title="Skilled RN Claim After Admission", 
-                   subtitle="Froedtert and High Value Proviers (National AVG)",
+                   subtitle="[Hospital A] and High Value Proviers (National AVG)",
                    y="Average Spending", 
                    x="", 
                    caption = "1 through 30 days After Discharge from Index Hospital \n Admission, Skilled Nursing Facility Claim Type ")
@@ -875,7 +881,7 @@ bar2 <- ggplot(data=glm.bar.HVFH, aes(x=HVFH, y=`Percent of spending on IP durin
               theme(legend.position = "none", axis.text.x = element_text(angle = 45)) +
               stat_summary(geom = "errorbar", fun.data = mean_se, position = "dodge", width=.2) +
               labs(title="IP During Admission", 
-                   subtitle="Froedtert and High Value Proviers (National AVG)",
+                   subtitle="[Hospital A] and High Value Proviers (National AVG)",
                    y="Percent of Spending", 
                    x="", 
                    caption = "During Index Hospital Admission,\n Inpatient Claim Type")
@@ -886,7 +892,7 @@ bar3 <- ggplot(data=glm.bar.HVFH, aes(x=HVFH, y=`Percent spending per IP claim a
               theme(legend.position = "none", axis.text.x = element_text(angle = 45)) +
               stat_summary(geom = "errorbar", fun.data = mean_se, position = "dodge", width=.2) +
               labs(title="IP Claim After Admission", 
-                   subtitle="Froedtert and High Value Proviers (National AVG)",
+                   subtitle="[Hospital A] and High Value Proviers (National AVG)",
                    y="Percent of Spending", 
                    x="", 
                    caption = "1 through 30 days After Discharge from Index Hospital \n Admission, Inpatient Claim Type")
@@ -894,7 +900,7 @@ bar3 <- ggplot(data=glm.bar.HVFH, aes(x=HVFH, y=`Percent spending per IP claim a
 #bar4 <- ggplot(data=glm.bar.HVFH, aes(x=HVFH, y=`Percent spending per skilled RN claim before admission`, fill = HVFH)) + geom_bar(stat="summary", fun.y = "mean", position=position_dodge()) +
 #        scale_fill_manual(values = c("#094897","#398c1d")) +  theme(legend.position = "none", axis.text.x = element_text(angle = 45)) +
 #        stat_summary(geom = "errorbar", fun.data = mean_se, position = "dodge", width=.2) +
-#        labs(title="Percent Spending per Skilled RN Claim Before Admission", subtitle="Froedtert and High Value Proviers (National AVG)",
+#        labs(title="Percent Spending per Skilled RN Claim Before Admission", subtitle="[Hospital A] and High Value Proviers (National AVG)",
 #        y="Percent of Spending", x="")
 
 bar5 <- ggplot(data=glm.bar.HVFH, aes(x=HVFH, y=`Percent spending per carrier claim After admission`, fill = HVFH)) + 
@@ -903,7 +909,7 @@ bar5 <- ggplot(data=glm.bar.HVFH, aes(x=HVFH, y=`Percent spending per carrier cl
               theme(legend.position = "none", axis.text.x = element_text(angle = 45)) +
               stat_summary(geom = "errorbar", fun.data = mean_se, position = "dodge", width=.2) +
               labs(title="Carrier Claim After Admission", 
-                   subtitle="Froedtert and High Value Proviers (National AVG)",
+                   subtitle="[Hospital A] and High Value Proviers (National AVG)",
                    y="Percent of Spending", 
                    x="", 
                    caption = "1 through 30 days After Discharge from Index Hospital Admission,\n Carrier (Ambulatory and Ancillary Services) Claim Type")
@@ -914,7 +920,7 @@ bar6 <- ggplot(data=glm.bar.HVFH, aes(x=HVFH, y=`Avg spending per hospice claim 
               theme(legend.position = "none", axis.text.x = element_text(angle = 45)) +
               stat_summary(geom = "errorbar", fun.data = mean_se, position = "dodge", width=.2) +
               labs(title="Hospice Claim After Admission", 
-                   subtitle="Froedtert and High Value Proviers (National AVG)",
+                   subtitle="[Hospital A] and High Value Proviers (National AVG)",
                    y="Average Spending", 
                    x="", 
                    caption = "1 through 30 days After Discharge from Index Hospital \n Admission, Hospice Claim Type")
@@ -1002,32 +1008,35 @@ xgb.bar.HVFH <- xgb.bar.data %>% filter(HVFH != "0")
 xgb.bar1 <- ggplot(data=xgb.bar.HVFH, aes(x=HVFH, y=`Avg spending per carrier claim before admission`, fill = HVFH)) + 
               geom_bar(stat="summary", fun.y = "mean", position=position_dodge()) + 
               scale_fill_manual(values = c("#094897","#398c1d")) + 
+              scale_x_discrete(labels = c('Hospital A','High Value')) +
               theme(legend.position = "none", axis.text.x = element_text(angle = 45)) + 
               stat_summary(geom = "errorbar", fun.data = mean_se, position = "dodge", width=.2) +
               labs(title="Average Spending per Carrier Claim pre-Admission", 
-                   subtitle="Froedtert and High Value Proviers (National AVG)",
+                   subtitle="[Hospital A] and High Value Proviers (National AVG)",
                    y="Average Spending", 
                    x="", 
                    caption = "1 through 30 days before Index Hospital \n Admission, Carrier (Ambulatory and Ancillary Services) Claim Type ")
 
 xgb.bar2 <- ggplot(data=xgb.bar.HVFH, aes(x=HVFH, y=`Avg episode spending total`, fill = HVFH)) + 
               geom_bar(stat="summary", fun.y = "mean", position=position_dodge()) +
-              scale_fill_manual(values = c("#094897","#398c1d")) +  
+              scale_fill_manual(values = c("#094897","#398c1d")) +
+              scale_x_discrete(labels = c('Hospital A','High Value')) +
               theme(legend.position = "none", axis.text.x = element_text(angle = 45)) +
               stat_summary(geom = "errorbar", fun.data = mean_se, position = "dodge", width=.2) +
               labs(title="Total Average Episode Spending", 
-                   subtitle="Froedtert and High Value Proviers (National AVG)",
+                   subtitle="[Hospital A] and High Value Proviers (National AVG)",
                    y="Average Spending", 
                    x="", 
                    caption = "Index Hospital Admission,\n Total Claim Type")
 
 xgb.bar3 <- ggplot(data=xgb.bar.HVFH, aes(x=HVFH, y=`Avg spending per hospice claim after admission`, fill = HVFH)) + 
               geom_bar(stat="summary", fun.y = "mean", position=position_dodge()) +
-              scale_fill_manual(values = c("#094897","#398c1d")) +  
+              scale_fill_manual(values = c("#094897","#398c1d")) +
+              scale_x_discrete(labels = c('Hospital A','High Value')) +
               theme(legend.position = "none", axis.text.x = element_text(angle = 45)) +
               stat_summary(geom = "errorbar", fun.data = mean_se, position = "dodge", width=.2) +
               labs(title="Average Spending per Hospice Claim", 
-                   subtitle="Froedtert and High Value Proviers (National AVG)",
+                   subtitle="[Hospital A] and High Value Proviers (National AVG)",
                    y="Average Spending", 
                    x="", 
                    caption = "1 through 30 days After Discharge from Index Hospital \n Admission, Hospice Claim Type")
@@ -1035,31 +1044,34 @@ xgb.bar3 <- ggplot(data=xgb.bar.HVFH, aes(x=HVFH, y=`Avg spending per hospice cl
 
 xgb.bar5 <- ggplot(data=xgb.bar.HVFH, aes(x=HVFH, y=`Avg ep spending per IP claim after admission`, fill = HVFH)) + 
               geom_bar(stat="summary", fun.y = "mean", position=position_dodge()) +
-              scale_fill_manual(values = c("#094897","#398c1d")) +  
+              scale_fill_manual(values = c("#094897","#398c1d")) +
+              scale_x_discrete(labels = c('Hospital A','High Value')) +
               theme(legend.position = "none", axis.text.x = element_text(angle = 45)) +
               stat_summary(geom = "errorbar", fun.data = mean_se, position = "dodge", width=.2) +
               labs(title="Average Spending per IP Claim post-Admission", 
-                   subtitle="Froedtert and High Value Proviers (National AVG)",
+                   subtitle="[Hospital A] and High Value Proviers (National AVG)",
                    y="Average Episode Spending", 
                    x="", 
                    caption = "1 through 30 days After Discharge from Index Hospital Admission,\n InPatient Claim Type")
 
 xgb.bar6 <- ggplot(data=xgb.bar.HVFH, aes(x=HVFH, y=`Percent of spending on IP during admission`, fill = HVFH)) + 
               geom_bar(stat="summary", fun.y = "mean", position=position_dodge()) +
-              scale_fill_manual(values = c("#094897","#398c1d")) +  
+              scale_fill_manual(values = c("#094897","#398c1d")) +
+              scale_x_discrete(labels = c('Hospital A','High Value')) +
               theme(legend.position = "none", axis.text.x = element_text(angle = 45)) +
               stat_summary(geom = "errorbar", fun.data = mean_se, position = "dodge", width=.2) +
               labs(title="Percent Spending During IP Admission", 
-                   subtitle="Froedtert and High Value Proviers (National AVG)",
+                   subtitle="[Hospital A] and High Value Proviers (National AVG)",
                    y="Percent Spending", 
                    x="", 
                    caption = "During Index Hospital Admission Index, \n  Inpatient Claim Type")
 
 ```
 
+
 ## High Value Comparison
 
-Comparing FH rates to those of High-value providers only we more clearly see the areas of opportunity for reducing patient cost burden. For example, high-value providers spend more during the inpatient admission but less in total average episode spending. Additionally, F&MCW should more closely evaluate ways to reduce average spending in post acute care (Inpatient post-admission and hospice claims) in addition to reducing ambulatory and ancillary services prior to admission (carrier claim pre-admission).
+Comparing [Hospital A] rates to those of High-value providers only we more clearly see the areas of opportunity for reducing patient cost burden. For example, high-value providers spend more during the inpatient admission but less in total average episode spending. Additionally, [Hospital A] should more closely evaluate ways to reduce average spending in post acute care (Inpatient post-admission and hospice claims) in addition to reducing ambulatory and ancillary services prior to admission (carrier claim pre-admission).
 
 ```{r,echo=FALSE, fig.height=14, fig.width=12}
 
