@@ -165,7 +165,7 @@ XGBoost attained the highest accuracy of the models tested at 94.8%, with good s
 
 
 
-Focusing in on the top 5 features (for brevity), Violin plots show the distribution of episode spending between high-value, and non-high value providers (FH spending shown in blue). 
+Focusing in on the top 5 features (for brevity), Violin plots show the distribution of episode spending between high-value, and non-high value providers ([Hospital A] spending shown in blue). 
 
 ![](Patient-Cost-and-High-Value-Healthcare_files/figure-html/unnamed-chunk-20-1.png)<!-- -->
 
